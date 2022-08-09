@@ -10,7 +10,7 @@ contract PottersNFT is ERC721Enumerable, Ownable {
     using Strings for uint256;
     using Counters for Counters.Counter;
 
-    uint256 constant maxMintId = 20;
+    uint256 constant maxMintId = 5;
     
     Counters.Counter private currentTokenId;
 

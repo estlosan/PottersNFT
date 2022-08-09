@@ -1,3 +1,3 @@
 module.exports = {
-    MAX_NFT_MINT: 20
+    MAX_NFT_MINT: 5
 }
