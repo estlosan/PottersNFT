@@ -9,13 +9,15 @@ contract('PottersNFT', ([owner, user, ...accounts]) => {
 
     let pottersNFTContract;
     beforeEach('Deploy contracts', async () => {
-        pottersNFTContract = await PottersNFT.new({ from: owner });
+        const baseTokenURI = 'https://mytestserver.com/'
+        pottersNFTContract = await PottersNFT.new(baseTokenURI, { from: owner });
     })
     describe('Deploy test', () => {
         it("Should deploy contract", async () => {
             const nftName = 'Potters';
-            const pottersNFT =  await PottersNFT.new();
-            (await pottersNFT.name()).should.be.equal(nftName);
+            const baseTokenURI = 'https://mytestserver.com/'
+            pottersNFTContract = await PottersNFT.new(baseTokenURI, { from: owner });
+            (await pottersNFTContract.name()).should.be.equal(nftName);
         })
     })
     describe('Set functions', () => {
@@ -28,6 +30,18 @@ contract('PottersNFT', ([owner, user, ...accounts]) => {
             const uriBase = "TestBase";
             await expectRevert(
                 pottersNFTContract.setBaseTokenURI(uriBase, { from: user }), 
+                msgErrors.ownable
+            )
+        })
+        it('Should allow set URI base extension from owner', async() => {
+            const baseExtension = ".json";
+            await pottersNFTContract.setBaseExtension(baseExtension, { from: owner });
+            (await pottersNFTContract.baseExtension()).should.be.equal(baseExtension);
+        })
+        it('Should deny set URI base extension from user', async() => {
+            const uriBase = "TestBase";
+            await expectRevert(
+                pottersNFTContract.setBaseExtension(uriBase, { from: user }), 
                 msgErrors.ownable
             )
         })
@@ -68,7 +82,7 @@ contract('PottersNFT', ([owner, user, ...accounts]) => {
 
         it('Should get metadata form NFT', async() => {
             const tokenIndex = 0;
-            const tokenURI = `https://mytestserver.com/${tokenIndex}`;
+            const tokenURI = `https://mytestserver.com/${tokenIndex}.json`;
             (await pottersNFTContract.tokenURI(tokenIndex)).should.be.equal(tokenURI);
         })
 

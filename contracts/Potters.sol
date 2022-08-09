@@ -15,10 +15,12 @@ contract PottersNFT is ERC721Enumerable, Ownable {
     Counters.Counter private currentTokenId;
 
     string public baseTokenURI;
+    string public baseExtension = ".json";
 
     event PotterMinted(uint256 indexed tokenId);
     
-    constructor() ERC721("Potters", "POT") {
+    constructor(string memory _baseTokenURI) ERC721("Potters", "POT") {
+        baseTokenURI = _baseTokenURI;
     }
 
     function mint(address _to) external onlyOwner {
@@ -32,7 +34,7 @@ contract PottersNFT is ERC721Enumerable, Ownable {
         _requireMinted(_tokenId);
         string memory currentBaseURI = _baseURI();
         return bytes(currentBaseURI).length > 0
-        ? string(abi.encodePacked(currentBaseURI, _tokenId.toString()))
+        ? string(abi.encodePacked(currentBaseURI, _tokenId.toString(), baseExtension))
         : '';
     }
 
@@ -40,8 +42,12 @@ contract PottersNFT is ERC721Enumerable, Ownable {
         baseTokenURI = _baseTokenURI;
     }
 
+    function setBaseExtension(string calldata _baseExtension) external onlyOwner {
+        baseExtension = _baseExtension;
+    }
+
     function _baseURI() internal view virtual override returns (string memory) {
         return baseTokenURI;
     }
- 
+
 }
