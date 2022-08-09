@@ -18,6 +18,21 @@ contract('PottersNFT', ([owner, user, ...accounts]) => {
             (await pottersNFT.name()).should.be.equal(nftName);
         })
     })
+    describe('Set functions', () => {
+        it('Should allow set URI base from owner', async() => {
+            const uriBase = "TestBase";
+            await pottersNFTContract.setBaseTokenURI(uriBase, { from: owner });
+            (await pottersNFTContract.baseTokenURI()).should.be.equal(uriBase);
+        })
+        it('Should deny set URI base from user', async() => {
+            const uriBase = "TestBase";
+            await expectRevert(
+                pottersNFTContract.setBaseTokenURI(uriBase, { from: user }), 
+                msgErrors.ownable
+            )
+        })
+
+    })
     describe('Mint', () => {
         it("Should allow mint NFT for user with owner", async() => {
             const tokenIndex = 0;
@@ -41,5 +56,21 @@ contract('PottersNFT', ([owner, user, ...accounts]) => {
                 msgErrors.nftMintLimit
             )
         })
+    })
+    describe('Metadata', () => {
+        beforeEach('Mint NFT', async() => {
+            const tokenIndex = 0;
+            const baseURI = 'https://mytestserver.com/';
+            await pottersNFTContract.mint(user, { from: owner });
+            (await pottersNFTContract.ownerOf(tokenIndex)).should.be.equal(user);
+            await pottersNFTContract.setBaseTokenURI(baseURI, { from: owner });
+        })
+
+        it('Should get metadata form NFT', async() => {
+            const tokenIndex = 0;
+            const tokenURI = `https://mytestserver.com/${tokenIndex}`;
+            (await pottersNFTContract.tokenURI(tokenIndex)).should.be.equal(tokenURI);
+        })
+
     })
 })
