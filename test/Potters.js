@@ -1,22 +1,26 @@
 const should = require('chai').should();
-const { BN,constants, expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
+const { BN,constants, expectEvent, expectRevert, time } = require('@openzeppelin/test-helpers');
 const { MAX_NFT_MINT } = require('./helpers/constants.js');
 const msgErrors = require('./helpers/errorMessages.js');
 
 const PottersNFT = artifacts.require('PottersNFT');
+const VRFCoordinatorMock = artifacts.require('VRFCoordinatorMock');
 
 contract('PottersNFT', ([owner, user, ...accounts]) => {
 
     let pottersNFTContract;
     beforeEach('Deploy contracts', async () => {
         const baseTokenURI = 'https://mytestserver.com/'
-        pottersNFTContract = await PottersNFT.new(baseTokenURI, { from: owner });
+        const subscriptionId = 0;
+        vrfCoordinatorMockContract = await VRFCoordinatorMock.new({ from: owner });
+        pottersNFTContract = await PottersNFT.new(vrfCoordinatorMockContract.address, subscriptionId, baseTokenURI, { from: owner });
     })
     describe('Deploy test', () => {
         it("Should deploy contract", async () => {
             const nftName = 'Potters';
+            const subscriptionId = 0;
             const baseTokenURI = 'https://mytestserver.com/'
-            pottersNFTContract = await PottersNFT.new(baseTokenURI, { from: owner });
+            pottersNFTContract = await PottersNFT.new(vrfCoordinatorMockContract.address, subscriptionId, baseTokenURI, { from: owner });
             (await pottersNFTContract.name()).should.be.equal(nftName);
         })
     })
@@ -47,36 +51,40 @@ contract('PottersNFT', ([owner, user, ...accounts]) => {
         })
 
     })
-    describe('Mint', () => {
+    describe('Random mint', () => {
         it("Should allow mint NFT for user with owner", async() => {
             const tokenIndex = 0;
-            await pottersNFTContract.mint(user, { from: owner });
-            (await pottersNFTContract.ownerOf(tokenIndex)).should.be.equal(user);
+            await pottersNFTContract.reserveRandomNFT({ from: owner });
+            await vrfCoordinatorMockContract.generateRandomSeed(5); // Seed % maxMintId == (TokenId 0)
+            await pottersNFTContract.mint({ from: owner });
+            (await pottersNFTContract.ownerOf(tokenIndex)).should.be.equal(owner);
         })
-        it('Should deny mint NFT with user', async() => {
-            const to = owner;
+        it('Should deny mint NFT without previous reservation', async() => {
             await expectRevert(
-                pottersNFTContract.mint(to, { from: user }), 
-                msgErrors.ownable
+                pottersNFTContract.mint({ from: user }), 
+                msgErrors.randomNumberPending
             )
         })
         it('Should deny mint more than max limit with owner', async() => {
-            const to = owner;
             for(let i = 0; i < MAX_NFT_MINT; i++) {
-                await pottersNFTContract.mint(user, { from: owner });
+                await pottersNFTContract.reserveRandomNFT({ from: owner });
+                await vrfCoordinatorMockContract.generateRandomSeed(i + 5); // Seed % maxMintId == (i + TokenId 0)
+                await pottersNFTContract.mint({ from: owner });
             }
             await expectRevert(
-                pottersNFTContract.mint(to, { from: owner }), 
+                pottersNFTContract.reserveRandomNFT({ from: owner }),
                 msgErrors.nftMintLimit
             )
-        })
+        }) 
     })
     describe('Metadata', () => {
         beforeEach('Mint NFT', async() => {
             const tokenIndex = 0;
             const baseURI = 'https://mytestserver.com/';
-            await pottersNFTContract.mint(user, { from: owner });
-            (await pottersNFTContract.ownerOf(tokenIndex)).should.be.equal(user);
+            await pottersNFTContract.reserveRandomNFT({ from: owner });
+            await vrfCoordinatorMockContract.generateRandomSeed(5); // Seed % maxMintId == (TokenId 0)
+            await pottersNFTContract.mint({ from: owner });
+            (await pottersNFTContract.ownerOf(tokenIndex)).should.be.equal(owner);
             await pottersNFTContract.setBaseTokenURI(baseURI, { from: owner });
         })
 
@@ -85,6 +93,5 @@ contract('PottersNFT', ([owner, user, ...accounts]) => {
             const tokenURI = `https://mytestserver.com/${tokenIndex}.json`;
             (await pottersNFTContract.tokenURI(tokenIndex)).should.be.equal(tokenURI);
         })
-
     })
 })

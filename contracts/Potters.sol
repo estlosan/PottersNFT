@@ -13,7 +13,6 @@ contract PottersNFT is VRFConsumerBaseV2, ERC721Enumerable, Ownable {
     using Counters for Counters.Counter;
 
     // Chainlink constants
-    address constant  vrfCoordinator = 0x2Ca8E0C643bDe4C2E08ab1fA0da3401AdAD7734D;
     bytes32 constant  keyHash = 0x79d3d8832d904592c0bf9818b621522c988bb8b0c05cdc3b15aea1b6e8db0c15;
     uint32 constant callbackGasLimit = 35000;
     uint16 constant requestConfirmations = 3;
@@ -28,25 +27,25 @@ contract PottersNFT is VRFConsumerBaseV2, ERC721Enumerable, Ownable {
     
     // Chainlink Subscription
     uint64 s_subscriptionId;
-    VRFCoordinatorV2Interface coordinatorContract;
+    VRFCoordinatorV2Interface public coordinatorContract;
 
-    mapping(uint256 => address) userByRequestId;
-    mapping(address => uint256) randomNumberByUser;
-    mapping(uint256 => bool) repeatedNumbers;
+    mapping(uint256 => address) public userByRequestId;
+    mapping(address => uint256) public randomNumberByUser;
+    mapping(uint256 => bool) public repeatedNumbers;
 
     event PotterMinted(uint256 indexed tokenId);
     event PotterReserved(uint256 indexed tokenId);
     
-    constructor(uint64 subscriptionId, string memory _baseTokenURI)
-    VRFConsumerBaseV2(vrfCoordinator)
+    constructor(address _vrfCoordinator, uint64 subscriptionId, string memory _baseTokenURI)
+    VRFConsumerBaseV2(_vrfCoordinator)
     ERC721("Potters", "POT") 
     {
         baseTokenURI = _baseTokenURI;
-        coordinatorContract = VRFCoordinatorV2Interface(vrfCoordinator);
+        coordinatorContract = VRFCoordinatorV2Interface(_vrfCoordinator);
         s_subscriptionId = subscriptionId;
     }
 
-    function mint() external onlyOwner {
+    function mint() external {
         require(randomNumberByUser[msg.sender] != 0, "PottersNFT: Call reserveRandomNFT before calling mint function");
         uint256 randomTokenId = generateRandomNumber();
         _safeMint(msg.sender, randomTokenId);
