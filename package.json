@@ -1,0 +1,22 @@
+{
+  "name": "pottersnft",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/estlosan/PottersNFT.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/estlosan/PottersNFT/issues"
+  },
+  "homepage": "https://github.com/estlosan/PottersNFT#readme",
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.7.3"
+  }
+}
